@@ -7,9 +7,14 @@ from PySide6.QtGui import QColor, QPalette
 class UIController(QObject):
     """Bridge for thread-safe UI updates from hardware thread"""
     update_signal = Signal(str, int)
+    plugin_signal = Signal(str)
+    learn_signal = Signal(bool)
 
     def trigger_update(self, control_id: str, value: int):
         self.update_signal.emit(control_id, value)
+        
+    def trigger_plugin(self, name: str):
+        self.plugin_signal.emit(name)
 
 class NocturnButton(QPushButton):
     def __init__(self, name, parent=None):
@@ -97,9 +102,36 @@ class MainWindow(QMainWindow):
         self.main_layout.setContentsMargins(40, 40, 40, 40)
 
         # Header
+        header_layout = QVBoxLayout()
         self.header = QLabel("NOCTURN STUDIO")
         self.header.setStyleSheet("font-size: 28px; font-weight: bold; color: #fff; letter-spacing: 5px;")
-        self.main_layout.addWidget(self.header, 0, Qt.AlignCenter)
+        
+        self.plugin_label = QLabel("Focus: Global")
+        self.plugin_label.setStyleSheet("font-size: 14px; color: #0f0; font-family: 'Courier New', monospace; margin-bottom: 10px;")
+        
+        self.learn_btn = QPushButton("MIDI LEARN")
+        self.learn_btn.setCheckable(True)
+        self.learn_btn.setFixedSize(120, 35)
+        self.learn_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #222;
+                color: #555;
+                font-weight: bold;
+                border: 2px solid #333;
+                border-radius: 4px;
+            }
+            QPushButton:checked {
+                background-color: #f00;
+                color: white;
+                border: 2px solid #ff4444;
+            }
+        """)
+        self.learn_btn.clicked.connect(self._on_learn_clicked)
+        
+        header_layout.addWidget(self.header, 0, Qt.AlignCenter)
+        header_layout.addWidget(self.plugin_label, 0, Qt.AlignCenter)
+        header_layout.addWidget(self.learn_btn, 0, Qt.AlignCenter)
+        self.main_layout.addLayout(header_layout)
 
         # Center Section (Encoders + Speed Dial)
         self.top_row = QHBoxLayout()
@@ -178,6 +210,16 @@ class MainWindow(QMainWindow):
                 ctrl.setChecked(value > 0)
             elif isinstance(ctrl, QSlider):
                 ctrl.setValue(value)
+
+    @Slot(str)
+    def set_plugin_name(self, name: str):
+        self.plugin_label.setText(f"Focus: {name}")
+        self.status.showMessage(f"Active Profile: {name}")
+        
+    def _on_learn_clicked(self, checked):
+        # Notify whoever is listening (Main app/Engine)
+        # We use a signal to keep it decoupled
+        pass 
 
 def run_app():
     app = sys.modules.get('PySide6.QtWidgets').QApplication(sys.argv)

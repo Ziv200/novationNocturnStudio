@@ -3,8 +3,9 @@ import os
 from PySide6.QtWidgets import QApplication
 from .ui.windows.main_window import MainWindow
 from .engine.mapper import MappingEngine
-from .daw.midi import RTMidiOutput, MockMidiOutput
+from .daw.midi import RTMidiOutput, MockMidiOutput, RTMidiInput
 from .hardware.device import MockNocturnDevice, RealNocturnDevice
+from .hardware.monitor import FocusMonitor
 from .model.mapping import Mapping, MappingTarget, TargetType
 
 from PySide6.QtCore import QTimer
@@ -28,7 +29,8 @@ def main():
     ui_controller = UIController()
     ui_controller.update_signal.connect(window.update_control)
     
-    # 2. Hardware Connection
+    # MIDI Input for Learn/Feedback
+    midi_in = RTMidiInput()
     device = RealNocturnDevice()
     if not device.connect():
         print("[System] Real hardware not found. Falling back to Mock.")
@@ -44,6 +46,39 @@ def main():
     
     engine = MappingEngine(midi_out, feedback_callback=handle_feedback)
     device.add_event_listener(engine.handle_event)
+
+    def on_focus_changed(app_name, window_title):
+        # We try to find a mapping for the window title first, then app name
+        # For simplicity, we'll use the window title as the profile name if it exists, 
+        # but cleanup is needed (e.g. remove " - " separator common in DAW windows)
+        profile = window_title if window_title else app_name
+        
+        # Filter profile name (you can add more logic here)
+        # e.g. "Serum - Preset Name" -> "Serum"
+        for common_vst in ["Serum", "VocalSynth", "Sylenth", "FabFilter"]:
+            if common_vst.lower() in profile.lower():
+                profile = common_vst
+                break
+        
+        engine.switch_profile(profile)
+        ui_controller.trigger_plugin(engine.current_profile)
+
+    ui_controller.plugin_signal.connect(window.set_plugin_name)
+    
+    def on_learn_toggled(checked):
+        engine.learn_mode = checked
+        print(f"[System] MIDI Learn: {'ON' if checked else 'OFF'}")
+        if not checked:
+            # Save the profile when exiting learn mode
+            engine.save_current_profile()
+
+    # Hook up the UI learn button to the engine
+    window.learn_btn.clicked.connect(on_learn_toggled)
+
+    midi_in.open(engine.handle_midi_input)
+    
+    monitor = FocusMonitor(on_focus_changed)
+    monitor.start()
     
     # 3. Comprehensive Mappings (All controls)
     all_mappings = {}
