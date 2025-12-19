@@ -22,12 +22,12 @@ class FocusMonitor(threading.Thread):
 
     def run(self):
         self._running = True
+        print("[FocusMonitor] Thread started.")
         while self._running:
             try:
                 self._check_focus()
             except Exception as e:
-                # print(f"[FocusMonitor] Error: {e}")
-                pass
+                print(f"[FocusMonitor] Error in loop: {e}")
             time.sleep(self.interval)
 
     def _check_focus(self):
@@ -45,16 +45,28 @@ class FocusMonitor(threading.Thread):
         if app_name != self._last_app or title != self._last_title:
             self._last_app = app_name
             self._last_title = title
-            self.callback(app_name, title or "")
+            print(f"[FocusMonitor] Changed: {app_name} -> {title}")
+            try:
+                self.callback(app_name, title or "")
+            except Exception as e:
+                print(f"[FocusMonitor] Error in callback: {e}")
 
     def _get_focused_window_title(self, pid: int) -> Optional[str]:
-        # Note: Accessibility permissions are required for this to work
         app_ref = AXUIElementCreateApplication(pid)
         if not app_ref:
             return None
             
         err, window_ref = AXUIElementCopyAttributeValue(app_ref, kAXFocusedWindowAttribute, None)
-        if err != 0 or not window_ref:
+        if err != 0:
+            if err == -1719: # kAXErrorAPIDisabled
+                print("[FocusMonitor] Warning: Accessibility API is disabled. Grant permissions in System Settings.")
+            elif err == -1728: # kAXErrorNoValue
+                pass # Normal if no window is focused
+            else:
+                pass # print(f"[FocusMonitor] AX Error {err} getting window")
+            return None
+            
+        if not window_ref:
             return None
             
         err, title = AXUIElementCopyAttributeValue(window_ref, kAXTitleAttribute, None)

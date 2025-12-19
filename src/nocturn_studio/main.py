@@ -28,6 +28,9 @@ def main():
     from .ui.windows.main_window import UIController
     ui_controller = UIController()
     ui_controller.update_signal.connect(window.update_control)
+    ui_controller.label_signal.connect(window.set_control_label)
+    ui_controller.plugin_signal.connect(window.set_plugin_name)
+    ui_controller.status_signal.connect(window.update_console_status)
     
     # MIDI Input for Learn/Feedback
     midi_in = RTMidiInput()
@@ -43,26 +46,51 @@ def main():
     def handle_feedback(control_id, value):
         ui_controller.trigger_update(control_id, value)
         device.set_led(control_id, value)
+        
+        # New: Functional label feedback
+        label = engine.get_label_for_control(control_id)
+        if label:
+            ui_controller.trigger_label(control_id, label)
     
-    engine = MappingEngine(midi_out, feedback_callback=handle_feedback)
+    # Bridge for Console Status
+    
+    engine = MappingEngine(midi_out, 
+                           feedback_callback=handle_feedback,
+                           status_callback=ui_controller.status_signal.emit)
+    engine._sync_navigation_leds()
+    engine._refresh_functional_mappings()
     device.add_event_listener(engine.handle_event)
 
     def on_focus_changed(app_name, window_title):
-        # We try to find a mapping for the window title first, then app name
-        # For simplicity, we'll use the window title as the profile name if it exists, 
-        # but cleanup is needed (e.g. remove " - " separator common in DAW windows)
+        # Determine the best profile name
         profile = window_title if window_title else app_name
         
-        # Filter profile name (you can add more logic here)
-        # e.g. "Serum - Preset Name" -> "Serum"
-        for common_vst in ["Serum", "VocalSynth", "Sylenth", "FabFilter"]:
+        # Clean up DAW-specific patterns (e.g. "Audio 01: Ins. 1 - SSLChannel Mono")
+        if " - " in profile:
+            profile = profile.split(" - ")[-1]
+            
+        # Strip common Cubase/DAW prefixes
+        for junk in [": Ins. ", "Part: "]:
+            if junk in profile:
+                profile = profile.split(junk)[-1]
+        
+        profile = profile.strip()
+        if not profile: profile = app_name
+
+        # Map to common VST names for clean profiles
+        for common_vst in ["Serum", "VocalSynth", "Sylenth", "FabFilter", "SSLChannel", "Massive"]:
             if common_vst.lower() in profile.lower():
                 profile = common_vst
                 break
         
         engine.switch_profile(profile)
-        ui_controller.trigger_plugin(engine.current_profile)
+        # Always update UI with the detected name, even if no custom profile found
+        # (Engine will use 'Global' if profile doesn't exist)
+        display_name = engine.current_profile if engine.current_profile != "Global" else f"Global ({profile})"
+        ui_controller.trigger_plugin(display_name)
 
+    ui_controller.update_signal.connect(window.update_control)
+    ui_controller.label_signal.connect(window.set_control_label)
     ui_controller.plugin_signal.connect(window.set_plugin_name)
     
     def on_learn_toggled(checked):
@@ -97,6 +125,13 @@ def main():
         all_mappings[id] = Mapping(id, MappingTarget(TargetType.MIDI_NOTE, identifier=40+i))
         
     all_mappings["button_speed_dial"] = Mapping("button_speed_dial", MappingTarget(TargetType.MIDI_NOTE, identifier=56))
+
+    # Add specific navigation button mappings for the engine to intercept
+    all_mappings["button_9"] = Mapping("Shift", MappingTarget(TargetType.MIDI_NOTE, identifier=48))
+    all_mappings["button_11"] = Mapping("Page Dn", MappingTarget(TargetType.MIDI_NOTE, identifier=50))
+    all_mappings["button_12"] = Mapping("Page Up", MappingTarget(TargetType.MIDI_NOTE, identifier=51))
+    all_mappings["button_13"] = Mapping("EQ Mode", MappingTarget(TargetType.MIDI_NOTE, identifier=52))
+    all_mappings["button_14"] = Mapping("Dyn Mode", MappingTarget(TargetType.MIDI_NOTE, identifier=53))
 
     engine.load_mappings(all_mappings)
 

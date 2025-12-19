@@ -33,6 +33,9 @@ Launch the application from your terminal:
 nocturn-studio
 ```
 
+> [!TIP]
+> **Using with Cubase?** Check out our [Cubase Integration Guide](CUBASE_GUIDE.md) for a quick start on VST mapping and auto-focus setup.
+
 ## 🛠️ Project Structure
 - `src/nocturn_studio/hardware`: Low-level USB/MIDI communication.
 - `src/nocturn_studio/engine`: Mapping and logic engine.

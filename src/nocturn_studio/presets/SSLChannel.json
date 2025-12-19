@@ -1,0 +1,191 @@
+{
+    "EQ_HIGH_FREQ": {
+        "source_id": "EQ High Freq",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 10
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_HIGH_GAIN": {
+        "source_id": "EQ High Gain",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 11
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_HIMID_FREQ": {
+        "source_id": "EQ HiMid Freq",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 12
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_HIMID_GAIN": {
+        "source_id": "EQ HiMid Gain",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 13
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_LOMID_FREQ": {
+        "source_id": "EQ LoMid Freq",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 14
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_LOMID_GAIN": {
+        "source_id": "EQ LoMid Gain",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 15
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_LOW_FREQ": {
+        "source_id": "EQ Low Freq",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 16
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_LOW_GAIN": {
+        "source_id": "EQ Low Gain",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 17
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_LOW_Q": {
+        "source_id": "EQ Low Q",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 20
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_LOMID_Q": {
+        "source_id": "EQ LoMid Q",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 21
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_HIMID_Q": {
+        "source_id": "EQ HiMid Q",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 22
+        },
+        "mode": "RELATIVE"
+    },
+    "EQ_HIGH_Q": {
+        "source_id": "EQ High Q",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 23
+        },
+        "mode": "RELATIVE"
+    },
+    "COMP_THRESHOLD": {
+        "source_id": "Comp Thresh",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 30
+        },
+        "mode": "RELATIVE"
+    },
+    "COMP_RATIO": {
+        "source_id": "Comp Ratio",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 31
+        },
+        "mode": "RELATIVE"
+    },
+    "COMP_ATTACK": {
+        "source_id": "Comp Attack",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 32
+        },
+        "mode": "RELATIVE"
+    },
+    "COMP_RELEASE": {
+        "source_id": "Comp Release",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 33
+        },
+        "mode": "RELATIVE"
+    },
+    "COMP_GAIN": {
+        "source_id": "Comp Gain",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 34
+        },
+        "mode": "RELATIVE"
+    },
+    "GATE_THRESHOLD": {
+        "source_id": "Gate Thresh",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 35
+        },
+        "mode": "RELATIVE"
+    },
+    "GATE_RANGE": {
+        "source_id": "Gate Range",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 36
+        },
+        "mode": "RELATIVE"
+    },
+    "GATE_RELEASE": {
+        "source_id": "Gate Release",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 37
+        },
+        "mode": "RELATIVE"
+    },
+    "OUTPUT_GAIN": {
+        "source_id": "Output Gain",
+        "target": {
+            "type": "MIDI_CC",
+            "channel": 0,
+            "identifier": 19
+        },
+        "mode": "ABSOLUTE"
+    }
+}

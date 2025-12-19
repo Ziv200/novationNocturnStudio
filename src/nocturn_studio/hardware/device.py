@@ -38,6 +38,8 @@ class RealNocturnDevice(DeviceInterface):
         self._thread = None
         self._ep_in = None
         self._ep_out = None
+        self._led_states = {}
+        self._write_thread = None
 
     def connect(self) -> bool:
         try:
@@ -82,10 +84,13 @@ class RealNocturnDevice(DeviceInterface):
             self._write_raw(0, 0, 176)
             self._init_leds()
             
-            self.connected = True
             self._running = True
             self._thread = threading.Thread(target=self._read_loop, daemon=True)
             self._thread.start()
+            
+            self._write_thread = threading.Thread(target=self._write_loop, daemon=True)
+            self._write_thread.start()
+            
             print("[RealDevice] Connected to Novation Nocturn via PyUSB.")
             return True
         except Exception as e:
@@ -113,6 +118,25 @@ class RealNocturnDevice(DeviceInterface):
                 print(f"[RealDevice] Unexpected error: {e}")
                 break
             time.sleep(0.001)
+
+    def _write_loop(self):
+        """Throttled LED update loop to prevent USB buffer overflow (Error 60)"""
+        last_sent = {}
+        while self._running:
+            # Copy to avoid mutation during iteration
+            current_states = dict(self._led_states)
+            for sid, val in current_states.items():
+                if last_sent.get(sid) != val:
+                    addr = self._get_led_address(sid)
+                    if addr is not None:
+                        print(f"[Hardware] LED Write: {sid} (addr {addr}) = {val}")
+                        self._write_raw(addr, val)
+                        last_sent[sid] = val
+                    # Tiny gap between individual CCs within the batch
+                    time.sleep(0.002) 
+            
+            # Master throttled rate (~20Hz is plenty for visual feedback)
+            time.sleep(0.05)
 
     def _parse_report(self, data):
         # cc = data[1], val = data[2]
@@ -170,23 +194,19 @@ class RealNocturnDevice(DeviceInterface):
         self._write_raw(81, 1)
 
     def set_led(self, source_id: str, value: int):
-        addr = self._get_led_address(source_id)
-        if addr is not None:
-            # Direct mapping as per user: 0=Off, 127=Full
-            self._write_raw(addr, value)
+        # Just update the cache, worker will handle the hardware sync
+        self._led_states[source_id] = value
 
     def _get_led_address(self, source_id: str) -> Optional[int]:
+        if source_id == "speed_dial": return 80
+        if source_id == "button_speed_dial": 
+            return None 
         if source_id.startswith("encoder_"):
             idx = int(source_id.split("_")[1])
             return 63 + idx 
-        if source_id == "speed_dial": return 80
         if source_id.startswith("button_"):
             idx = int(source_id.split("_")[1])
             return 111 + idx 
-        if source_id == "button_speed_dial": 
-            # Speed dial button LED is often the same address as its style or button? 
-            # In some protocols it's 81 or 128. Let's try 128 as a fallback or skip.
-            return None 
         return None
 
 class MockNocturnDevice(DeviceInterface):
